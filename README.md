@@ -4,6 +4,12 @@ This project implements a high-integrity, ledger-based wallet service for a clos
 virtual currency system (e.g. gaming credits or reward points). The system guarantees
 correct balances, supports high concurrency, and prevents duplicate transactions.
 
+🔌 API Testing (Postman)
+
+Postman collection:
+
+https://www.postman.com/mission-architect-2278183/wallet-management/collection/38236892-cc5e73a3-2225-41e9-a1e1-75559ea61bdf
+
 ---
 
 ## Technology Choices
