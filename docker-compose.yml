@@ -1,0 +1,21 @@
+services:
+  wallet-db:
+    image: postgres:17
+    container_name: wallet-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: wallet-db
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: nest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - freecodecamp
+
+volumes:
+  postgres_data:
+
+networks:
+  freecodecamp:
+    driver: bridge
