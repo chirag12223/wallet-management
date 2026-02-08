@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/**
+ * =========================
+ * CORE DOMAIN TABLES
+ * =========================
+ */
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  wallets   Wallet[]
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Asset {
+  id        String   @id @default(uuid())
+  code      String   @unique // GOLD, POINTS
+  name      String
+  wallets   Wallet[]
+  createdAt DateTime @default(now())
+
+  @@map("assets")
+}
+
+model Wallet {
+  id        String          @id @default(uuid())
+  userId    String?
+  assetId   String
+  user      User?            @relation(fields: [userId], references: [id])
+  asset     Asset           @relation(fields: [assetId], references: [id])
+  accounts  LedgerAccount[]
+  createdAt DateTime        @default(now())
+
+  @@unique([userId, assetId])
+  @@map("wallets")
+}
+
+/**
+ * =========================
+ * LEDGER (DOUBLE ENTRY)
+ * =========================
+ */
+
+model LedgerAccount {
+  id        String            @id @default(uuid())
+  walletId  String?
+  wallet    Wallet?           @relation(fields: [walletId], references: [id])
+  type      LedgerAccountType
+  name      String
+  entries   LedgerEntry[]
+  createdAt DateTime          @default(now())
+
+  @@index([walletId])
+  @@map("ledger_accounts")
+}
+
+model LedgerEntry {
+  id            String        @id @default(uuid())
+  transactionId String
+  accountId     String
+  amount        BigInt // positive or negative
+  transaction   Transaction   @relation(fields: [transactionId], references: [id])
+  account       LedgerAccount @relation(fields: [accountId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([transactionId])
+  @@index([accountId])
+  @@map("ledger_entries")
+}
+
+/**
+ * =========================
+ * TRANSACTIONS & IDEMPOTENCY
+ * =========================
+ */
+
+model Transaction {
+  id          String          @id @default(uuid())
+  type        TransactionType
+  reference   String?
+  entries     LedgerEntry[]
+  IdempotencyKey IdempotencyKey? // 👈 ADD THIS
+  createdAt   DateTime        @default(now())
+
+  @@index([type])
+  @@map("transactions")
+}
+
+model IdempotencyKey {
+  id            String      @id @default(uuid())
+  key           String      @unique
+  transactionId String      @unique // 👈 THIS IS REQUIRED
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime    @default(now())
+
+  @@map("idempotency_keys")
+}
+
+/**
+ * =========================
+ * ENUMS
+ * =========================
+ */
+
+enum TransactionType {
+  TOPUP
+  BONUS
+  SPEND
+}
+
+enum LedgerAccountType {
+  USER
+  SYSTEM
+}
